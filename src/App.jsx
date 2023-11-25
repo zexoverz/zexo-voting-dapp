@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import zexoLogo from '/zexo.png'
@@ -7,12 +7,52 @@ import {Box, Button, Divider, Grid, Typography, Card, CardActions, CardContent, 
 import pancake1 from '/pancake1.png'
 import pancake2 from '/pancake2.png'
 import TransactionHistory from './components/TransactionHistory'
+import toast, { Toaster } from 'react-hot-toast';
+import { ethers } from "ethers";
+import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { InjectedConnector } from 'wagmi/connectors/injected'
+
 
 function App() {
   const [flag, setFlag] = useState(false)
+  const { isConnected, address, connector: activeConnector } = useAccount()
+  const { connect, connectors } = useConnect()
+  const { disconnect } = useDisconnect()
+
+  const handleConnect = async () => {
+    toast.loading("Loading...")
+    await connect({
+      connector: new InjectedConnector(),
+    })
+
+    toast.dismiss()
+    toast.success("Wallet Connected!")
+  }
+
+  const handleDisconnect = async () => {
+    await disconnect()
+    toast.success("Wallet Disconnected!")
+  }
+
+  useEffect(() => {
+    const handleConnectorUpdate = ({account, chain}) => {
+        if (account) {
+          toast.success("Change Account!")
+        } else if (chain) {
+          toast.success("Change Network!")
+        }
+    }
+  
+    if (activeConnector) {
+      activeConnector.on('change', handleConnectorUpdate)
+    }
+  
+    // return () => activeConnector.off('change', handleConnectorUpdate)
+  }, [activeConnector])
+  
 
   return (
-    <Box sx={{  }}>
+    <Box sx={{ flexGrow: 1  }}>
       <Grid container spacing={3}>
         <Grid item xs={12}>
           <Box display={'flex'} flexDirection={'row'} justifyContent={'center'}>
@@ -23,7 +63,7 @@ function App() {
 
         <Grid item xs={12}>
         {
-          flag ? (<Button variant='contained'  color='secondary' onClick={() => setFlag(!flag)}> 0x37eC410f573d6D22E5bD41fE14ea01Ab0A20B562</Button>) : <Button  variant='contained' onClick={() => setFlag(!flag)} color='secondary'>Connect Your Wallet!</Button>
+          isConnected ? (<Button variant='contained'  color='secondary' onClick={() => handleDisconnect()}>{address}</Button>) : <Button  variant='contained' onClick={() => handleConnect()} color='secondary'>Connect Your Wallet!</Button>
         }
         </Grid>
         <Divider />
@@ -81,6 +121,8 @@ function App() {
         <TransactionHistory />
         </Grid>
       </Grid>
+
+      <Toaster />
     </Box>
   )
 }
