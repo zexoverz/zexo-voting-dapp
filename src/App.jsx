@@ -13,7 +13,7 @@ import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { VOTING_ABI, VOTING_ADDRESS } from './constant'
 import { getContract } from 'viem'
-import { readContracts, readContract } from '@wagmi/core'
+import { readContracts, readContract, prepareWriteContract, writeContract, waitForTransaction } from '@wagmi/core'
 
 const votingContract = {
   address: VOTING_ADDRESS,
@@ -26,9 +26,10 @@ function App() {
   const { isConnected, address, connector: activeConnector } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
-  const [ currentRound, setCurrentRound] = useState("X")
+  const [ currentRound, setCurrentRound] = useState(0)
   const [ ownerAddress, setOwnerAddress] = useState("X")
   const [ candidates, setCandidates] = useState([])
+  const [ statusVote, setStatusVote] = useState(false)
 
   const handleConnect = async () => {
     toast.loading("Loading...")
@@ -65,9 +66,9 @@ function App() {
       })
 
       if(data){
-        setCurrentRound(Number(data[0].result))
-        setOwnerAddress(data[1].result)
+        
 
+        // Handle mapping dynamic candidate
         let candidateCount = Number(data[2].result)
         let candidateMapping = []
 
@@ -82,7 +83,7 @@ function App() {
               {
                 ...votingContract,
                 functionName: 'getCandidateVoteCount',
-                args: [i, currentRound]
+                args: [i, Number(data[0].result)]
               }
             ]
           })
@@ -97,23 +98,122 @@ function App() {
           candidateMapping.push(candidateObj)
         }
 
-        console.log(candidateMapping, "CANDIDATE MAPPING")
 
+        // Checking status vote in each round
+        if(isConnected){
+          let statusVote = await readContract({
+            ...votingContract,
+            functionName: 'voters',
+            args: [address, Number(data[0].result)]
+          })
+
+          setStatusVote(statusVote)
+        }
+
+        setCurrentRound(Number(data[0].result))
+        setOwnerAddress(data[1].result)
         setCandidates(candidateMapping)
       }
     }catch(error){
+      toast.dismiss();
       console.log(error)
 
       toast.error("Error fetch initial data!")
     }
   }
 
+  const voteCandidate = async (id) => {
+    try{
+      toast.loading("prepare voting..")
+
+      const { request } = await prepareWriteContract({
+        ...votingContract,
+        functionName: 'vote',
+        args: [id],
+      })
+
+      const {hash} = await writeContract(request)
+
+      toast.dismiss();
+
+      toast.loading(`waiting voting transactions : ${hash}`, {
+        style: {
+          maxWidth: 630,
+          textAlign: 'left'
+        }
+      })
+
+      const txData = await waitForTransaction({
+        hash: hash,
+      })
+
+      // decode event logs from receipt tx
+      console.log(txData, "RESULT DATA")
+      const iface = new ethers.utils.Interface(VOTING_ABI);
+      const parsed = iface.parseLog(txData.logs[0]);
+      console.log(parsed, "PARSED EVENT")
+
+      await fetchInitialData()
+      toast.dismiss();
+      toast.success("Vote Candidate Success")
+    }catch(err){
+      toast.dismiss();
+      console.log(err)
+      
+      toast.error("Vote Candidate Error!")
+    }
+  }
+
+  const startNewRound = async () => {
+    try{
+      if(ownerAddress && isConnected){
+        if(ownerAddress != address){
+          toast.error("You are not owner!")
+          return
+        }
+
+        // owner can start new round
+        toast.loading("preparing newRound..")
+
+        const { request } = await prepareWriteContract({
+          ...votingContract,
+          functionName: 'startNewRound',
+        })
+  
+        const {hash} = await writeContract(request)
+  
+        toast.dismiss();
+  
+        toast.loading(`waiting voting transactions : ${hash}`, {
+          style: {
+            maxWidth: 630,
+            textAlign: 'left'
+          }
+        })
+  
+        const txData = await waitForTransaction({
+          hash: hash,
+        })
+
+        console.log(txData, "Start New Round receipt!")
+        await fetchInitialData()
+        toast.dismiss();
+        toast.success("Vote Candidate Success")
+      }
+    }catch(err){
+      console.log(err)
+      toast.dismiss()
+      toast.error("Start New Round Error!")
+    }
+  }
+
   useEffect(() => {
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
-          toast.success("Change Account!")
+          console.log("change Account")
+          fetchInitialData()
         } else if (chain) {
-          toast.success("Change Network!")
+          console.log("change Network")
         }
     }
   
@@ -145,17 +245,17 @@ function App() {
         
         <Grid item xs={12} >
           <Typography variant='h5' mb={1}>Current Round: {currentRound}</Typography>
-          <Button color='secondary' size='small' variant='contained'>Start New Round</Button>
+          <Button color='secondary' size='small' variant='contained' onClick={() => startNewRound()}>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
           <Box display={'flex'} flexDirection={'row'} gap={4} justifyContent={'center'} flexWrap={'wrap'} flexGrow={'1'}>
           {
-            candidates.map(item => (
-              <Card sx={{ maxWidth: 300 }}>
+            candidates.map((item, i) => (
+              <Card sx={{ maxWidth: 300 }} key={i}>
                 <CardMedia
                   component="img"
                   alt="pancake image"
-                  image={pancake1}
+                  image={i % 2 == 0 ? pancake1 : pancake2}
                   height={300}
                 />
                 <CardContent>
@@ -166,18 +266,23 @@ function App() {
                     Vote Count : {item.voteCounts}
                   </Typography>
                 </CardContent>
-                <CardActions>
-                  <Button fullWidth color='secondary' variant='contained'>Vote</Button>
-                </CardActions>
+                {
+                  isConnected && 
+                  <CardActions>
+                  {
+                    statusVote ? <Button fullWidth disabled color='secondary' variant='contained'>You already voted</Button> : <Button fullWidth color='secondary' onClick={() => voteCandidate(i)} variant='contained'>Vote</Button>
+                  }
+                  </CardActions>
+                }
               </Card>
             ))
           }
           </Box>
         </Grid>
         
-        <Grid Grid item xs={12} mt={10}>
-        <Typography variant='h3'>Transaction History</Typography>
-        <TransactionHistory />
+        <Grid Grid item xs={12} mt={15}>
+        <Typography variant='h3' mb={5}>Transaction History</Typography>
+        <TransactionHistory/>
         </Grid>
       </Grid>
 
