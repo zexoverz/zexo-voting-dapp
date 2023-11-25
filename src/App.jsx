@@ -6,6 +6,7 @@ import './App.css'
 import {Box, Button, Divider, Grid, Typography, Card, CardActions, CardContent, CardMedia} from '@mui/material';
 import pancake1 from '/pancake1.png'
 import pancake2 from '/pancake2.png'
+import TransactionHistory from './components/TransactionHistory'
 
 function App() {
   const [flag, setFlag] = useState(false)
@@ -32,7 +33,7 @@ function App() {
           <Button color='secondary' size='small' variant='contained'>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
-          <Box display={'flex'} flexDirection={'row'} gap={4} justifyContent={'center'}>
+          <Box display={'flex'} flexDirection={'row'} gap={4} justifyContent={'center'} flexWrap={'wrap'} flexGrow={'1'}>
           <Card sx={{ maxWidth: 300 }}>
             <CardMedia
               component="img"
@@ -75,7 +76,10 @@ function App() {
           </Box>
         </Grid>
         
-        
+        <Grid Grid item xs={12} mt={10}>
+        <Typography variant='h3'>Transaction History</Typography>
+        <TransactionHistory />
+        </Grid>
       </Grid>
     </Box>
   )
