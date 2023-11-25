@@ -11,6 +11,14 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from "ethers";
 import { useAccount, useConnect, useDisconnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
+import { VOTING_ABI, VOTING_ADDRESS } from './constant'
+import { getContract } from 'viem'
+import { readContracts, readContract } from '@wagmi/core'
+
+const votingContract = {
+  address: VOTING_ADDRESS,
+  abi: VOTING_ABI,
+}
 
 
 function App() {
@@ -18,6 +26,9 @@ function App() {
   const { isConnected, address, connector: activeConnector } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
+  const [ currentRound, setCurrentRound] = useState("X")
+  const [ ownerAddress, setOwnerAddress] = useState("X")
+  const [ candidates, setCandidates] = useState([])
 
   const handleConnect = async () => {
     toast.loading("Loading...")
@@ -34,6 +45,69 @@ function App() {
     toast.success("Wallet Disconnected!")
   }
 
+  const fetchInitialData = async () => {
+    try{
+      let data = await readContracts({
+        contracts: [
+          {
+            ...votingContract,
+            functionName: 'currentRound',
+          },
+          {
+            ...votingContract,
+            functionName: 'owner',
+          },
+          {
+            ...votingContract,
+            functionName: 'candidatesCount',
+          }
+        ]
+      })
+
+      if(data){
+        setCurrentRound(Number(data[0].result))
+        setOwnerAddress(data[1].result)
+
+        let candidateCount = Number(data[2].result)
+        let candidateMapping = []
+
+        for(let i = 0; i < candidateCount; i++){
+          let candidateData = await readContracts({
+            contracts: [
+              {
+                ...votingContract,
+                functionName: 'candidates',
+                args: [i]
+              },
+              {
+                ...votingContract,
+                functionName: 'getCandidateVoteCount',
+                args: [i, currentRound]
+              }
+            ]
+          })
+
+          console.log(candidateData, "CANDIDATE DATA")
+
+          let candidateObj = {
+            name: candidateData[0].result,
+            voteCounts: Number(candidateData[1].result)
+          }
+
+          candidateMapping.push(candidateObj)
+        }
+
+        console.log(candidateMapping, "CANDIDATE MAPPING")
+
+        setCandidates(candidateMapping)
+      }
+    }catch(error){
+      console.log(error)
+
+      toast.error("Error fetch initial data!")
+    }
+  }
+
   useEffect(() => {
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
@@ -46,8 +120,9 @@ function App() {
     if (activeConnector) {
       activeConnector.on('change', handleConnectorUpdate)
     }
-  
-    // return () => activeConnector.off('change', handleConnectorUpdate)
+    
+    fetchInitialData()
+
   }, [activeConnector])
   
 
@@ -69,50 +144,34 @@ function App() {
         <Divider />
         
         <Grid item xs={12} >
-          <Typography variant='h5' mb={1}>Current Round: 1</Typography>
+          <Typography variant='h5' mb={1}>Current Round: {currentRound}</Typography>
           <Button color='secondary' size='small' variant='contained'>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
           <Box display={'flex'} flexDirection={'row'} gap={4} justifyContent={'center'} flexWrap={'wrap'} flexGrow={'1'}>
-          <Card sx={{ maxWidth: 300 }}>
-            <CardMedia
-              component="img"
-              alt="green iguana"
-              image={pancake1}
-              height={300}
-            />
-            <CardContent>
-              <Typography gutterBottom variant="h5" component="div">
-                Candidate 1
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Vote Count : 10
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button fullWidth color='secondary' variant='contained'>Vote</Button>
-            </CardActions>
-          </Card>
-
-          <Card sx={{ maxWidth: 300,  }}>
-            <CardMedia
-              component="img"
-              alt="green iguana"
-              image={pancake2}
-              height={300}
-            />
-            <CardContent>
-              <Typography gutterBottom variant="h5" component="div">
-                Candidate 2
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Vote Count : 10
-              </Typography>
-            </CardContent>
-            <CardActions>
-              <Button fullWidth color='secondary' variant='contained'>Vote</Button>
-            </CardActions>
-          </Card>
+          {
+            candidates.map(item => (
+              <Card sx={{ maxWidth: 300 }}>
+                <CardMedia
+                  component="img"
+                  alt="pancake image"
+                  image={pancake1}
+                  height={300}
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="h5" component="div">
+                    {item.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Vote Count : {item.voteCounts}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button fullWidth color='secondary' variant='contained'>Vote</Button>
+                </CardActions>
+              </Card>
+            ))
+          }
           </Box>
         </Grid>
         
