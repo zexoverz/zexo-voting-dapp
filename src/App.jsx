@@ -38,7 +38,7 @@ function App() {
     watch: true
   })
 
-  console.log
+  console.log(error)
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
@@ -252,7 +252,7 @@ function App() {
         <Divider />
         
         <Grid item xs={12} >
-          <Typography variant='h5' mb={1}>Current Round: {data ? Number(data[0].result) : "X" }</Typography>
+          <Typography variant='h5' mb={1}>Current Round: {isConnected ? Number(data[0].result) : "X" }</Typography>
           <Button color='secondary' size='small' variant='contained' onClick={() => startNewRound()}>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
