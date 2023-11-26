@@ -6,11 +6,11 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';;
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { publicProvider, } from 'wagmi/providers/public'
-import {polygonMumbai,} from 'wagmi/chains'
+import {polygonMumbai, mainnet, optimism} from 'wagmi/chains'
 
 
 const { chains, publicClient } = configureChains(
-  [polygonMumbai],
+  [mainnet, polygonMumbai, optimism],
   [publicProvider()],
 )
 
