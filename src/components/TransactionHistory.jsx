@@ -82,18 +82,18 @@ function createData(voters, candidate, round) {
   return { voters, candidate, round, timestamp: new Date() };
 }
 
-const rows = [
-  createData('0x018Fa62a5B05BC8bB14b4Ee7685B45483E40BD6a', 'Candidate 1', 1),
-  createData('0xABe58dd62568c882D5f87cfb4F33E60F1CB4f78C', 'Candidate 1', 1),
-  createData('0xCd71Bc310f1551d43c3e8DE3cd10a65296cE8acb', 'Candidate 2', 1),
-]
-export default function TransactionHistory() {
+// const rows = [
+//   createData('0x018Fa62a5B05BC8bB14b4Ee7685B45483E40BD6a', 'Candidate 1', 1),
+//   createData('0xABe58dd62568c882D5f87cfb4F33E60F1CB4f78C', 'Candidate 1', 1),
+//   createData('0xCd71Bc310f1551d43c3e8DE3cd10a65296cE8acb', 'Candidate 2', 1),
+// ]
+export default function TransactionHistory({voteHistory}) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
 
   // Avoid a layout jump when reaching the last page with empty rows.
   const emptyRows =
-    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
+    page > 0 ? Math.max(0, (1 + page) * rowsPerPage - voteHistory.length) : 0;
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -117,8 +117,8 @@ export default function TransactionHistory() {
         </TableHead>
         <TableBody>
           {(rowsPerPage > 0
-            ? rows.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-            : rows
+            ? voteHistory.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+            : voteHistory
           ).map((row) => (
             <TableRow key={row.voters}>
               <TableCell component="th" scope="row">
@@ -131,7 +131,7 @@ export default function TransactionHistory() {
                 {row.round}
               </TableCell>
               <TableCell style={{ width: 160 }} align="right">
-                {row.timestamp.toLocaleDateString()}
+                {row.timestamp}
               </TableCell>
             </TableRow>
           ))}
@@ -146,7 +146,7 @@ export default function TransactionHistory() {
             <TablePagination
               rowsPerPageOptions={[5, 10, 25, { label: 'All', value: -1 }]}
               colSpan={3}
-              count={rows.length}
+              count={voteHistory.length}
               rowsPerPage={rowsPerPage}
               page={page}
               onPageChange={handleChangePage}

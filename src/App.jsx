@@ -9,8 +9,9 @@ import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from "ethers";
 import { useAccount, useConnect, useContractRead, useContractReads, useDisconnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
-import { VOTING_ABI, VOTING_ADDRESS } from './constant'
+import { BACKEND_URL, VOTING_ABI, VOTING_ADDRESS } from './constant'
 import { readContracts, readContract, prepareWriteContract, writeContract, waitForTransaction } from '@wagmi/core'
+import axios from 'axios';
 
 const votingContract = {
   address: VOTING_ADDRESS,
@@ -22,6 +23,7 @@ function App() {
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
   const [ candidates, setCandidates] = useState([])
+  const [ voteHistory, setVoteHistory] = useState([])
   const {data} = useContractReads({
     contracts: [
       {
@@ -35,7 +37,6 @@ function App() {
     ],
     watch: true
   })
-
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
@@ -58,11 +59,29 @@ function App() {
     toast.success("Wallet Disconnected!")
   }
 
+  const fetchVoteHistory = async () => {
+    try {
+      const response = await axios.get(`${BACKEND_URL}/v1/vote-history`)
+
+      setVoteHistory(response.data.data)
+    } catch (error) {
+      toast.dismiss();
+      console.log(error)
+      toast.error("Error Fetch Vote History!")
+    }
+  }
+
+  const saveVoteHistory = async (voteHistoryBody) => {
+    try {
+      const response = await axios.post(`${BACKEND_URL}/v1/vote-history`, voteHistoryBody)
+    } catch (error) {
+
+    }
+  }
+
   const fetchInitialData = async () => {
     try{
       if(data){
-        
-
         // Handle mapping candidate
         let candidateMapping = []
 
@@ -129,10 +148,19 @@ function App() {
       const iface = new ethers.utils.Interface(VOTING_ABI);
       const parsed = iface.parseLog(txData.logs[0]);
       console.log(parsed, "PARSED EVENT")
+      
+      let voteHistoryBody = {
+        voters: parsed.args[1],
+        candidate: parsed.args[0],
+        round: Number(parsed.args[2]),
+        timestamp: Number(parsed.args[3])
+      }
 
-      console.log(parsed.args[0], "Parsed candidate name")
+      console.log(voteHistoryBody)
 
+      await saveVoteHistory(voteHistoryBody)
       await fetchInitialData()
+      await fetchVoteHistory()
       toast.dismiss();
       toast.success("Vote Candidate Success")
     }catch(err){
@@ -145,7 +173,7 @@ function App() {
 
   const startNewRound = async () => {
     try{
-      if(ownerAddress && isConnected){
+      if(data[1].result && isConnected){
         if(data[1].result != address){
           toast.error("You are not owner!")
           return
@@ -175,6 +203,7 @@ function App() {
         })
 
         console.log(txData, "Start New Round receipt!")
+        await fetchInitialData()
         toast.dismiss();
         toast.success("Vote Candidate Success")
       }
@@ -199,7 +228,7 @@ function App() {
     }
     
     fetchInitialData()
-
+    fetchVoteHistory()
   }, [activeConnector])
   
 
@@ -259,7 +288,7 @@ function App() {
         
         <Grid Grid item xs={12} mt={15}>
         <Typography variant='h3' mb={5}>Transaction History</Typography>
-        <TransactionHistory/>
+        <TransactionHistory voteHistory={voteHistory}/>
         </Grid>
       </Grid>
 
