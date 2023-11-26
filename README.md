@@ -1,6 +1,8 @@
 # Seedify Voting Dapp Challanges
 Challenge: Build a simple decentralized voting application using React.js with a smart contract already done
 
+![image](https://github.com/zexoverz/zexo-voting-dapp/blob/master/landing.png)
+
 Description:
 Your task is to build a simple decentralized voting application that allows users to cast their votes without the need for a central authority. A smart contract has already been created and deployed on a testnet. You will need to integrate this smart contract into your application and build the frontend and backend components.
 
@@ -23,11 +25,14 @@ Note: You are free to use any libraries or frameworks you see fit to complete th
 
 ## Voting Smart Contract
 
+Custom smart contract with support for multiple voting rounds
+
 Polygon Mumbai Testnet : 0x6aF073Ee5De24D916e91358D7096F8B82acEe057
 
 https://mumbai.polygonscan.com/tx/0x820908cfea9a559b6b01cf15518c548b587332326484bb34573c20bc8a10cdda
 
 ## Backend Implementation
 
-I'm build listener function to save vote with backend implementation using Node.js Express
+I build listener function to save vote transaction with backend implementation using Node.js Express
+
 https://github.com/zexoverz/zexo-voting-backend
