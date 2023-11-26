@@ -4,18 +4,14 @@ import App from './App.jsx'
 import './index.css'
 import { ThemeProvider, createTheme } from '@mui/material/styles';;
 import { WagmiConfig, createConfig, configureChains } from 'wagmi'
-import { createPublicClient, http } from 'viem'
-import { sepolia } from '@wagmi/core'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { publicProvider, } from 'wagmi/providers/public'
 import {polygonMumbai,} from 'wagmi/chains'
-import { alchemyProvider } from 'wagmi/providers/alchemy'
 
- 
 
 const { chains, publicClient } = configureChains(
   [polygonMumbai],
-  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider()],
+  [publicProvider()],
 )
 
 const config = createConfig({
