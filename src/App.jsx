@@ -24,7 +24,7 @@ function App() {
   const { disconnect } = useDisconnect()
   const [ candidates, setCandidates] = useState([])
   const [ voteHistory, setVoteHistory] = useState([])
-  const {data} = useContractReads({
+  const {data, error} = useContractReads({
     contracts: [
       {
         ...votingContract,
@@ -37,6 +37,8 @@ function App() {
     ],
     watch: true
   })
+
+  console.log(error)
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
