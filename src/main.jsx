@@ -7,11 +7,12 @@ import { WagmiConfig, createConfig, configureChains } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { publicProvider, } from 'wagmi/providers/public'
 import {polygonMumbai, mainnet, optimism} from 'wagmi/chains'
+import { alchemyProvider } from 'wagmi/providers/alchemy'
 
 
 const { chains, publicClient } = configureChains(
   [mainnet, polygonMumbai, optimism],
-  [publicProvider()],
+  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider()],
 )
 
 const config = createConfig({

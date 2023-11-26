@@ -38,11 +38,11 @@ function App() {
     watch: true
   })
 
-  console.log(error)
+  console.log
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
-    args: [address, Number(data[0].result)],
+    args: [address, data ? Number(data[0]?.result) : 1],
     watch: true
   })
 
@@ -252,7 +252,7 @@ function App() {
         <Divider />
         
         <Grid item xs={12} >
-          <Typography variant='h5' mb={1}>Current Round: {data[0].error ? "X" : Number(data[0].result)}</Typography>
+          <Typography variant='h5' mb={1}>Current Round: {data ? Number(data[0].result) : "X" }</Typography>
           <Button color='secondary' size='small' variant='contained' onClick={() => startNewRound()}>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
