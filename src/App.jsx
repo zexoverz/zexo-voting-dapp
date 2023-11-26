@@ -1,6 +1,4 @@
 import { useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import zexoLogo from '/zexo.png'
 import './App.css'
 import {Box, Button, Divider, Grid, Typography, Card, CardActions, CardContent, CardMedia} from '@mui/material';
@@ -9,10 +7,9 @@ import pancake2 from '/pancake2.png'
 import TransactionHistory from './components/TransactionHistory'
 import toast, { Toaster } from 'react-hot-toast';
 import { ethers } from "ethers";
-import { useAccount, useConnect, useDisconnect } from 'wagmi'
+import { useAccount, useConnect, useContractRead, useContractReads, useDisconnect } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { VOTING_ABI, VOTING_ADDRESS } from './constant'
-import { getContract } from 'viem'
 import { readContracts, readContract, prepareWriteContract, writeContract, waitForTransaction } from '@wagmi/core'
 
 const votingContract = {
@@ -20,16 +17,31 @@ const votingContract = {
   abi: VOTING_ABI,
 }
 
-
 function App() {
-  const [flag, setFlag] = useState(false)
   const { isConnected, address, connector: activeConnector } = useAccount()
   const { connect, connectors } = useConnect()
   const { disconnect } = useDisconnect()
-  const [ currentRound, setCurrentRound] = useState(0)
-  const [ ownerAddress, setOwnerAddress] = useState("X")
   const [ candidates, setCandidates] = useState([])
-  const [ statusVote, setStatusVote] = useState(false)
+  const {data} = useContractReads({
+    contracts: [
+      {
+        ...votingContract,
+        functionName: 'currentRound',
+      },
+      {
+        ...votingContract,
+        functionName: 'owner',
+      },
+    ],
+    watch: true
+  })
+
+  const {data:statusVote} = useContractRead({
+    ...votingContract,
+    functionName: 'voters',
+    args: [address, Number(data[0].result)],
+    watch: true
+  })
 
   const handleConnect = async () => {
     toast.loading("Loading...")
@@ -48,31 +60,13 @@ function App() {
 
   const fetchInitialData = async () => {
     try{
-      let data = await readContracts({
-        contracts: [
-          {
-            ...votingContract,
-            functionName: 'currentRound',
-          },
-          {
-            ...votingContract,
-            functionName: 'owner',
-          },
-          {
-            ...votingContract,
-            functionName: 'candidatesCount',
-          }
-        ]
-      })
-
       if(data){
         
 
-        // Handle mapping dynamic candidate
-        let candidateCount = Number(data[2].result)
+        // Handle mapping candidate
         let candidateMapping = []
 
-        for(let i = 0; i < candidateCount; i++){
+        for(let i = 0; i < 2; i++){
           let candidateData = await readContracts({
             contracts: [
               {
@@ -85,10 +79,8 @@ function App() {
                 functionName: 'getCandidateVoteCount',
                 args: [i, Number(data[0].result)]
               }
-            ]
+            ],
           })
-
-          console.log(candidateData, "CANDIDATE DATA")
 
           let candidateObj = {
             name: candidateData[0].result,
@@ -98,20 +90,6 @@ function App() {
           candidateMapping.push(candidateObj)
         }
 
-
-        // Checking status vote in each round
-        if(isConnected){
-          let statusVote = await readContract({
-            ...votingContract,
-            functionName: 'voters',
-            args: [address, Number(data[0].result)]
-          })
-
-          setStatusVote(statusVote)
-        }
-
-        setCurrentRound(Number(data[0].result))
-        setOwnerAddress(data[1].result)
         setCandidates(candidateMapping)
       }
     }catch(error){
@@ -148,10 +126,11 @@ function App() {
       })
 
       // decode event logs from receipt tx
-      console.log(txData, "RESULT DATA")
       const iface = new ethers.utils.Interface(VOTING_ABI);
       const parsed = iface.parseLog(txData.logs[0]);
       console.log(parsed, "PARSED EVENT")
+
+      console.log(parsed.args[0], "Parsed candidate name")
 
       await fetchInitialData()
       toast.dismiss();
@@ -167,7 +146,7 @@ function App() {
   const startNewRound = async () => {
     try{
       if(ownerAddress && isConnected){
-        if(ownerAddress != address){
+        if(data[1].result != address){
           toast.error("You are not owner!")
           return
         }
@@ -196,7 +175,6 @@ function App() {
         })
 
         console.log(txData, "Start New Round receipt!")
-        await fetchInitialData()
         toast.dismiss();
         toast.success("Vote Candidate Success")
       }
@@ -211,7 +189,6 @@ function App() {
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
           console.log("change Account")
-          fetchInitialData()
         } else if (chain) {
           console.log("change Network")
         }
@@ -244,7 +221,7 @@ function App() {
         <Divider />
         
         <Grid item xs={12} >
-          <Typography variant='h5' mb={1}>Current Round: {currentRound}</Typography>
+          <Typography variant='h5' mb={1}>Current Round: {data[0].error ? "X" : Number(data[0].result)}</Typography>
           <Button color='secondary' size='small' variant='contained' onClick={() => startNewRound()}>Start New Round</Button>
         </Grid>
         <Grid item xs={12}>
