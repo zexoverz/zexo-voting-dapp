@@ -24,6 +24,7 @@ function App() {
   const { disconnect } = useDisconnect()
   const [ candidates, setCandidates] = useState([])
   const [ voteHistory, setVoteHistory] = useState([])
+  const [ statusVote, setStatusVote] = useState(false)
   const {data, error} = useContractReads({
     contracts: [
       {
@@ -39,12 +40,12 @@ function App() {
   })
 
   console.log(error)
-  const {data:statusVote} = useContractRead({
-    ...votingContract,
-    functionName: 'voters',
-    args: [address, data ? Number(data[0]?.result) : 1],
-    watch: true
-  })
+  // const {data:statusVote} = useContractRead({
+  //   ...votingContract,
+  //   functionName: 'voters',
+  //   args: [address, Number(data[0].result)],
+  //   watch: true
+  // })
 
   const handleConnect = async () => {
     toast.loading("Loading...")
@@ -83,7 +84,7 @@ function App() {
 
   const fetchInitialData = async () => {
     try{
-      if(data){
+      if(isConnected && data){
         // Handle mapping candidate
         let candidateMapping = []
 
@@ -111,6 +112,14 @@ function App() {
           candidateMapping.push(candidateObj)
         }
 
+        let res = await readContract({
+          ...votingContract,
+          functionName: 'voters',
+          args: [address, Number(data[0].result)],
+        })
+
+        
+        setStatusVote(res)
         setCandidates(candidateMapping)
       }
     }catch(error){
@@ -220,6 +229,7 @@ function App() {
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
           console.log("change Account")
+          fetchInitialData()
         } else if (chain) {
           console.log("change Network")
         }
