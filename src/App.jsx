@@ -243,9 +243,12 @@ function App() {
       activeConnector.on('change', handleConnectorUpdate)
     }
     
-    if(dataSuccess){
+    if(data === undefined){
+      console.log("Data blockchain undefined")
+    }else{
       fetchInitialData()
     }
+
     fetchVoteHistory()
   }, [activeConnector])
   
