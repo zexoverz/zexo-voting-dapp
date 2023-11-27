@@ -245,6 +245,8 @@ function App() {
     if(data){
       if(data[0].status == "success"){
         fetchInitialData()
+      }else{
+        toast.error("Fetch Data Error, Please refresh again!")
       }
     }
 
@@ -261,7 +263,7 @@ function App() {
             <Typography variant='h4' pt={6}>Zexo Voting System</Typography>
           </Box>
         </Grid>
-        
+
         <Grid item xs={12}>
         {
           isConnected ? (<Button variant='contained'  color='secondary' onClick={() => handleDisconnect()}>{address}</Button>) : <Button  variant='contained' onClick={() => handleConnect()} color='secondary'>Connect Your Wallet!</Button>
