@@ -42,7 +42,7 @@ function App() {
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
-    args: [address, isConnected ? Number(data[0].result) : 1],
+    args: [address, data ? Number(data[0].result) : 1],
     watch: true
   })
 
