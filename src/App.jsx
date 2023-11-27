@@ -36,8 +36,14 @@ function App() {
         functionName: 'owner',
       },
     ],
-    watch: true
+    watch: true,
+    onError(error){
+      onsole.log('Error Fetch Blockchain data', error)
+      toast.error("Error fetch blockchain data")
+    }
   })
+
+  console.log(data, "CHECK DATA LIFECYCLE")
 
   const handleConnect = async () => {
     toast.loading("Loading...")
@@ -47,7 +53,6 @@ function App() {
     })
 
     toast.dismiss()
-    toast.success("Wallet Connected!")
   }
 
   const handleDisconnect = async () => {
