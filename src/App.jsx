@@ -43,7 +43,7 @@ function App() {
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
-    args: [address, data ? Number(data[0].result) : 1],
+    args: [address, data ? Number(data[0].result ? data[0].result : 1) : 1],
     watch: true
   })
 
@@ -219,8 +219,6 @@ function App() {
   }
 
   useEffect(() => {
-    handleConnect()
-
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
           console.log("change Account")

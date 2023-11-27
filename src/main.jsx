@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom/client'
 import App from './App.jsx'
 import './index.css'
 import { ThemeProvider, createTheme } from '@mui/material/styles';;
-import { WagmiConfig, createConfig, configureChains } from 'wagmi'
+import { WagmiConfig, createConfig, configureChains, } from 'wagmi'
 import { InjectedConnector } from 'wagmi/connectors/injected'
 import { publicProvider, } from 'wagmi/providers/public'
 import {polygonMumbai, mainnet, optimism} from 'wagmi/chains'
@@ -14,13 +14,7 @@ import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 
 const { chains, publicClient } = configureChains(
   [mainnet, polygonMumbai, optimism],
-  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider(),
-  jsonRpcProvider({
-    rpc: (chain) => ({
-      http: `https://rpc-mumbai.maticvigil.com/`,
-    }),
-  }),
-  ],
+  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider(),],
 )
 
 const config = createConfig({
