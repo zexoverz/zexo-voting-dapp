@@ -21,7 +21,7 @@ const votingContract = {
 
 function App() {
   const { isConnected, address, connector: activeConnector } = useAccount()
-  const { connect, connectors } = useConnect()
+  const { connect, connectors, } = useConnect()
   const { disconnect } = useDisconnect()
   const [ candidates, setCandidates] = useState([])
   const [ voteHistory, setVoteHistory] = useState([])
@@ -36,15 +36,6 @@ function App() {
         functionName: 'owner',
       },
     ],
-    watch: true
-  })
-
-  console.log(error)
-  console.log(dataSuccess, "DATA SUCCESS")
-  const {data:statusVote} = useContractRead({
-    ...votingContract,
-    functionName: 'voters',
-    args: [address, dataSuccess ? Number(data[0]?.result) : 1],
     watch: true
   })
 
@@ -88,7 +79,8 @@ function App() {
 
   const fetchInitialData = async () => {
     try{
-      if(isConnected && data){
+      if(isConnected && dataSuccess){
+
         // Handle mapping candidate
         let candidateMapping = []
 
@@ -129,6 +121,18 @@ function App() {
   const voteCandidate = async (id) => {
     try{
       toast.loading("prepare voting..")
+
+      let statusVoteCheck = await readContract({
+        ...votingContract,
+        functionName: 'voters',
+        args: [address, Number(data[0].result)]
+      })
+
+      if(statusVoteCheck){
+        toast.dismiss();
+        toast.error("You already voted!")
+        return
+      }
 
       const { request } = await prepareWriteContract({
         ...votingContract,
@@ -284,9 +288,7 @@ function App() {
                 {
                   isConnected && 
                   <CardActions>
-                  {
-                    statusVote ? <Button fullWidth disabled color='secondary' variant='contained'>You already voted</Button> : <Button fullWidth color='secondary' onClick={() => voteCandidate(i)} variant='contained'>Vote</Button>
-                  }
+                    <Button fullWidth color='secondary' onClick={() => voteCandidate(i)} variant='contained'>Vote</Button>
                   </CardActions>
                 }
               </Card>
