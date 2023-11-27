@@ -243,7 +243,7 @@ function App() {
     }
     
     if(data){
-      if(data[0].status == "success"){
+      if(data[0].status == "success" && isConnected){
         fetchInitialData()
       }else{
         toast.error("Fetch Data Error, Please refresh again!")
