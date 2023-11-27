@@ -8,6 +8,7 @@ import { InjectedConnector } from 'wagmi/connectors/injected'
 import { publicProvider, } from 'wagmi/providers/public'
 import {polygonMumbai, mainnet, optimism} from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
+import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
 
 
 const { chains, publicClient } = configureChains(
@@ -17,7 +18,7 @@ const { chains, publicClient } = configureChains(
 
 const config = createConfig({
   autoConnect: true,
-  connectors: [new InjectedConnector({ chains })],
+  connectors: [new InjectedConnector({ chains }), new MetaMaskConnector({ chains }),],
   publicClient,
 })
 

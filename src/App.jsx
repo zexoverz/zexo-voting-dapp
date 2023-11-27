@@ -217,6 +217,8 @@ function App() {
   }
 
   useEffect(() => {
+    handleConnect()
+    
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
           console.log("change Account")
