@@ -9,11 +9,18 @@ import { publicProvider, } from 'wagmi/providers/public'
 import {polygonMumbai, mainnet, optimism} from 'wagmi/chains'
 import { alchemyProvider } from 'wagmi/providers/alchemy'
 import { MetaMaskConnector } from 'wagmi/connectors/metaMask'
+import { jsonRpcProvider } from 'wagmi/providers/jsonRpc'
 
 
 const { chains, publicClient } = configureChains(
   [mainnet, polygonMumbai, optimism],
-  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider()],
+  [alchemyProvider({ apiKey: 'WAIvpIfI8p5UMIzosJ4Z8cxDLgo1zfjm' }), publicProvider(),
+  jsonRpcProvider({
+    rpc: (chain) => ({
+      http: `https://rpc-mumbai.maticvigil.com/`,
+    }),
+  }),
+  ],
 )
 
 const config = createConfig({

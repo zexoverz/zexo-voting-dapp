@@ -12,6 +12,7 @@ import { InjectedConnector } from 'wagmi/connectors/injected'
 import { BACKEND_URL, VOTING_ABI, VOTING_ADDRESS } from './constant'
 import { readContracts, readContract, prepareWriteContract, writeContract, waitForTransaction } from '@wagmi/core'
 import axios from 'axios';
+import { polygonMumbai } from 'viem/chains';
 
 const votingContract = {
   address: VOTING_ADDRESS,
@@ -50,6 +51,7 @@ function App() {
     toast.loading("Loading...")
     await connect({
       connector: new InjectedConnector(),
+      chainId: polygonMumbai.id
     })
 
     toast.dismiss()
@@ -218,7 +220,7 @@ function App() {
 
   useEffect(() => {
     handleConnect()
-    
+
     const handleConnectorUpdate = ({account, chain}) => {
         if (account) {
           console.log("change Account")
