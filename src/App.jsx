@@ -43,8 +43,6 @@ function App() {
     }
   })
 
-  console.log(data, "CHECK DATA LIFECYCLE")
-
   const handleConnect = async () => {
     toast.loading("Loading...")
     await connect({
@@ -75,6 +73,8 @@ function App() {
   const saveVoteHistory = async (voteHistoryBody) => {
     try {
       await axios.post(`${BACKEND_URL}/v1/vote-history`, voteHistoryBody)
+
+      await fetchVoteHistory()
     } catch (error) {
       toast.dismiss();
       console.log(error)
@@ -176,7 +176,6 @@ function App() {
 
       await saveVoteHistory(voteHistoryBody)
       await fetchInitialData()
-      await fetchVoteHistory()
       toast.dismiss();
       toast.success("Vote Candidate Success")
     }catch(err){
@@ -243,10 +242,10 @@ function App() {
       activeConnector.on('change', handleConnectorUpdate)
     }
     
-    if(data === undefined){
-      console.log("Data blockchain undefined")
-    }else{
-      fetchInitialData()
+    if(data){
+      if(data[0].status == "success"){
+        fetchInitialData()
+      }
     }
 
     fetchVoteHistory()
@@ -262,7 +261,7 @@ function App() {
             <Typography variant='h4' pt={6}>Zexo Voting System</Typography>
           </Box>
         </Grid>
-
+        
         <Grid item xs={12}>
         {
           isConnected ? (<Button variant='contained'  color='secondary' onClick={() => handleDisconnect()}>{address}</Button>) : <Button  variant='contained' onClick={() => handleConnect()} color='secondary'>Connect Your Wallet!</Button>
@@ -270,10 +269,13 @@ function App() {
         </Grid>
         <Divider />
         
-        <Grid item xs={12} >
-          <Typography variant='h5' mb={1}>Current Round: {isConnected ? Number(data[0].result) : "X" }</Typography>
+        {
+          data &&
+          <Grid item xs={12} >
+          <Typography variant='h5' mb={1}>Current Round: {data[0].status == "success" ? Number(data[0].result) : "X" }</Typography>
           <Button color='secondary' size='small' variant='contained' onClick={() => startNewRound()}>Start New Round</Button>
-        </Grid>
+          </Grid>
+        }
         <Grid item xs={12}>
           <Box display={'flex'} flexDirection={'row'} gap={4} justifyContent={'center'} flexWrap={'wrap'} flexGrow={'1'}>
           {
@@ -302,6 +304,8 @@ function App() {
               </Card>
             ))
           }
+
+
           </Box>
         </Grid>
         

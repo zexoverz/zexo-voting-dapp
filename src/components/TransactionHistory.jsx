@@ -1,4 +1,4 @@
-import React from 'react'
+import React, {useEffect} from 'react'
 import PropTypes from 'prop-types';
 import { useTheme } from '@mui/material/styles';
 import Box from '@mui/material/Box';
@@ -78,15 +78,6 @@ TablePaginationActions.propTypes = {
   rowsPerPage: PropTypes.number.isRequired,
 };
 
-function createData(voters, candidate, round) {
-  return { voters, candidate, round, timestamp: new Date() };
-}
-
-// const rows = [
-//   createData('0x018Fa62a5B05BC8bB14b4Ee7685B45483E40BD6a', 'Candidate 1', 1),
-//   createData('0xABe58dd62568c882D5f87cfb4F33E60F1CB4f78C', 'Candidate 1', 1),
-//   createData('0xCd71Bc310f1551d43c3e8DE3cd10a65296cE8acb', 'Candidate 2', 1),
-// ]
 export default function TransactionHistory({voteHistory}) {
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(5);
@@ -104,6 +95,11 @@ export default function TransactionHistory({voteHistory}) {
     setPage(0);
   };
 
+  useEffect(() => {
+    console.log("TRIGGER VoteHistory")
+  }, [voteHistory])
+  
+
   return (
     <TableContainer component={Paper}>
       <Table sx={{ minWidth: 500 }} aria-label="custom pagination table">
@@ -119,8 +115,8 @@ export default function TransactionHistory({voteHistory}) {
           {(rowsPerPage > 0
             ? voteHistory.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
             : voteHistory
-          ).map((row) => (
-            <TableRow key={row.voters}>
+          ).map((row, i) => (
+            <TableRow key={i}>
               <TableCell component="th" scope="row">
                 {row.voters}
               </TableCell>
