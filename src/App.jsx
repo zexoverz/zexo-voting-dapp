@@ -25,7 +25,7 @@ function App() {
   const { disconnect } = useDisconnect()
   const [ candidates, setCandidates] = useState([])
   const [ voteHistory, setVoteHistory] = useState([])
-  const {data, error} = useContractReads({
+  const {data, error, isSuccess:dataSuccess} = useContractReads({
     contracts: [
       {
         ...votingContract,
@@ -40,10 +40,11 @@ function App() {
   })
 
   console.log(error)
+  console.log(dataSuccess, "DATA SUCCESS")
   const {data:statusVote} = useContractRead({
     ...votingContract,
     functionName: 'voters',
-    args: [address, data ? Number(data[0].result ? data[0].result : 1) : 1],
+    args: [address, dataSuccess ? Number(data[0]?.result) : 1],
     watch: true
   })
 
@@ -77,9 +78,11 @@ function App() {
 
   const saveVoteHistory = async (voteHistoryBody) => {
     try {
-      const response = await axios.post(`${BACKEND_URL}/v1/vote-history`, voteHistoryBody)
+      await axios.post(`${BACKEND_URL}/v1/vote-history`, voteHistoryBody)
     } catch (error) {
-
+      toast.dismiss();
+      console.log(error)
+      toast.error("Error Save Vote History!")
     }
   }
 
@@ -231,7 +234,9 @@ function App() {
       activeConnector.on('change', handleConnectorUpdate)
     }
     
-    fetchInitialData()
+    if(dataSuccess){
+      fetchInitialData()
+    }
     fetchVoteHistory()
   }, [activeConnector])
   
